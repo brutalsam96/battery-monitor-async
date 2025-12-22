@@ -116,13 +116,14 @@ async def main():
         sys_bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
         ses_bus = await MessageBus(bus_type=BusType.SESSION).connect()
         
-        # 2. Find the correct device path (THE FIX FOR THE ROOT ERROR)
+        # 2. Find the correct device path dynamically
         device_path = await find_display_device_path(sys_bus)
         
-        if not device_path or device_path == "/org/freedesktop/UPower/devices/DisplayDevice":
+        if not device_path or device_path != "/org/freedesktop/UPower/devices/DisplayDevice":
             # If the dynamic path still returns the symlink, check if it's actually valid
             # (A laptop without a battery will often fail here)
             print("Warning: Could not dynamically resolve battery path. Using hardcoded path.")
+            device_path = "/org/freedesktop/UPower/devices/DisplayDevice"
             # If your system truly lacks a battery, this is where the script will fail gracefully.
         
         # --- Setup Notifications (Session Bus) ---
