@@ -69,7 +69,7 @@ class BatteryMonitor:
                     "BATTERY CRITICAL!",
                     f"Level is {pct}%. Please Charge your Device",
                     URGENCY_CRITICAL,
-                    "battery-level-0-symbolic",
+                    "battery-010-symbolic",
                 )
                 self.crit_notified = True
                 self.warn_notified = True
@@ -80,7 +80,7 @@ class BatteryMonitor:
                     "Low Battery",
                     f"Level is {pct}%. Time to Recharge",
                     URGENCY_CRITICAL,
-                    "battery-level-10-symbolic",
+                    "battery-030-symbolic",
                 )
                 self.warn_notified = True
 
