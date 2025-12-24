@@ -86,14 +86,17 @@ class BatteryMonitor:
             self.crit_notified = False
 
             if state_enum == 1 and not args.no_charger_notify:  # Charging
-                await self.notifier.send(
-                    "Battery Monitor",
-                    "Charging",
-                    URGENCY_LOW,
-                    "battery-030-charging",
-                )
-
+                if not getattr(self, "chrg_notified", False):
+                    await self.notifier.send(
+                        "Battery Monitor",
+                        "Charging",
+                        URGENCY_LOW,
+                        "battery-030-charging",
+                    )
+                    self.chrg_notified = True
             return
+
+        self.chrg_notified = False
 
         # Check Levels (Only runs if state_enum == 2, Discharging)
         if pct <= CRIT_LEVEL:
@@ -123,12 +126,18 @@ class BatteryMonitor:
 
         updated = False
         if "Percentage" in changed_props:
-            self.current_percentage = get_value(changed_props["Percentage"])
-            updated = True
+            updated_val = int(get_value(changed_props["Percentage"]))
+            if updated_val != getattr(self, "last_reported_percent", -1):
+                self.current_percentage = updated_val
+                self.last_reported_percent = updated_val
+                updated = True
 
         if "State" in changed_props:
-            self.current_state = get_value(changed_props["State"])
-            updated = True
+            updated_state = int(get_value(changed_props["State"]))
+            if updated_state != getattr(self, "last_reported_state", -1):
+                self.current_state = updated_state
+                self.last_reported_state = updated_state
+                updated = True
 
         if updated:
             # Schedule async evaluation from sync callback
