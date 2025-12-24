@@ -1,20 +1,52 @@
 import asyncio
 import logging
-import os
+import argparse
+import sys
 from upower_api import UPowerWrapper
 from notify import Notifier, URGENCY_LOW, URGENCY_CRITICAL
 from dbus_next.signature import Variant
 
-# --- constants ---
-WARN_LEVEL = 20
-CRIT_LEVEL = 10
 
 # --- logging ---
+
+parser = argparse.ArgumentParser(
+    description="Battery Monitor uses dbus_next to listen PropertiesChanged signal to monitor device battery and send notifications on two levels"
+)
+
+parser.add_argument("--debug", action="store_true", help="Enable debugging mode")
+parser.add_argument(
+    "--no-charger-notify",
+    action="store_true",
+    help="Disable notifications when plugging in charger",
+)
+parser.add_argument(
+    "-wl",
+    "--warn-level",
+    type=int,
+    default=20,
+    help="Battery warning level (default: 20)",
+)
+parser.add_argument(
+    "-cl",
+    "--crit-level",
+    type=int,
+    default=10,
+    help="Battery critical level (default: 10)",
+)
+args = parser.parse_args()
+
+LEVEL = "DEBUG" if args.debug else "INFO"
+WARN_LEVEL = args.warn_level
+CRIT_LEVEL = args.crit_level
+
 logger = logging.getLogger("battery-monitor")
+logging.basicConfig(level=LEVEL)
 
-LOG_LEVEL = os.getenv("_BAT_MON_DBG_", "INFO").upper()
 
-logging.basicConfig(level=LOG_LEVEL)
+class HardwareNotFoundError(Exception):
+    """Exception raised when no monitorable battery or UPS is found."""
+
+    pass
 
 
 # --- Main Class ---
@@ -52,10 +84,10 @@ class BatteryMonitor:
             self.warn_notified = False
             self.crit_notified = False
 
-            if state_enum == 1:  # Charging
+            if state_enum == 1 and not args.no_charger_notify:  # Charging
                 await self.notifier.send(
-                    "Charging",
-                    f"Charging from {pct}% 🔌",
+                    "Battery Monitor",
+                    "Charging 🔌",
                     URGENCY_LOW,
                     "battery-charging",
                 )
@@ -67,7 +99,7 @@ class BatteryMonitor:
             if not self.crit_notified:
                 await self.notifier.send(
                     "BATTERY CRITICAL!",
-                    f"Level is {pct}%. Please Charge your Device",
+                    f"Battery is at {pct}%. Please Charge your Device",
                     URGENCY_CRITICAL,
                     "battery-010-symbolic",
                 )
@@ -78,7 +110,7 @@ class BatteryMonitor:
             if not self.warn_notified:
                 await self.notifier.send(
                     "Low Battery",
-                    f"Level is {pct}%. Time to Recharge",
+                    f"Battery is at {pct}%. Time to Recharge",
                     URGENCY_CRITICAL,
                     "battery-030-symbolic",
                 )
@@ -109,6 +141,11 @@ class BatteryMonitor:
                 logger.warning("Warning: Notification service unavailable.")
 
             self.device_path = await self.upower.get_display_device()
+
+            if not await self.upower.is_present(self.device_path):
+                raise HardwareNotFoundError(
+                    "No battery or UPS detected on this system."
+                )
 
             # Fallback/Check
             if not self.device_path:
@@ -147,12 +184,19 @@ class BatteryMonitor:
 
 
 async def main():
-    monitor = BatteryMonitor(UPowerWrapper(), Notifier())
-    await monitor.start()
+    try:
+        monitor = BatteryMonitor(UPowerWrapper(), Notifier())
+        await monitor.start()
+    except HardwareNotFoundError as e:
+        logger.info(f"System: {e}")
+        return True
+    except Exception:
+        return False
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        pass
+        logger.info("Service stopped by user")
+        sys.exit(0)

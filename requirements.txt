@@ -1,2 +1,2 @@
 dbus-next==0.2.3
-upower-python-wrapper==0.1.1
+upower-python-wrapper==0.1.2.2
