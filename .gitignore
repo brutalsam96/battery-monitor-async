@@ -1,2 +1,4 @@
-omarchy-battery-monitor
-omarchy-battery-monitor2
+__pycache__
+venv
+.venv
+pyrightconfig.json
