@@ -71,6 +71,7 @@ class BatteryMonitor:
         self.current_state = 0
         self.warn_notified = False
         self.crit_notified = False
+        self.chrg_notified = False
 
     async def evaluate_state(self):
         pct = self.current_percentage
@@ -87,9 +88,9 @@ class BatteryMonitor:
             if state_enum == 1 and not args.no_charger_notify:  # Charging
                 await self.notifier.send(
                     "Battery Monitor",
-                    "Charging 🔌",
+                    "Charging",
                     URGENCY_LOW,
-                    "battery-charging",
+                    "battery-030-charging",
                 )
 
             return
@@ -200,3 +201,43 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Service stopped by user")
         sys.exit(0)
+
+
+#         if state_enum == 1:
+#     if not self.chrg_notified and not args.no_charger_notify:
+#         await self.notifier.send(
+#             "Battery Monitor",
+#             "Charging",
+#             URGENCY_LOW,
+#             "battery-050-charging",
+#         )
+#         self.chrg_notified = True
+#     self.warn_notified = False
+#     self.chrg_notified = False
+# elif state_enum == 2:
+#     self.chrg_notified = False
+#
+#     # Check Levels (Only runs if state_enum == 2, Discharging)
+#     if pct <= CRIT_LEVEL:
+#         if not self.crit_notified:
+#             await self.notifier.send(
+#                 "BATTERY CRITICAL!",
+#                 f"Battery is at {pct}%. Please Charge your Device",
+#                 URGENCY_CRITICAL,
+#                 "battery-010-symbolic",
+#             )
+#             self.crit_notified = True
+#             self.warn_notified = True
+#
+#     elif pct <= WARN_LEVEL:
+#         if not self.warn_notified:
+#             await self.notifier.send(
+#                 "Low Battery",
+#                 f"Battery is at {pct}%. Time to Recharge",
+#                 URGENCY_CRITICAL,
+#                 "battery-030-symbolic",
+#             )
+#             self.warn_notified = True
+# else:
+#     self.chrg_notified = False
+#

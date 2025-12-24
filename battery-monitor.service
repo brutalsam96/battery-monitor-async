@@ -1,0 +1,15 @@
+[Unit]
+Description=Battery Monitor and Notifier Service
+After=network.target
+
+[Service]
+Type=simple
+
+ExecStart=%h/.local/share/battery-monitor/venv/bin/python %h/.local/share/battery-monitor/battery-monitor.py
+WorkingDirectory=%h/.local/share/battery-monitor/
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
