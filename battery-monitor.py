@@ -87,13 +87,12 @@ class BatteryMonitor:
 
             if state_enum == 1 and not args.no_charger_notify:  # Charging
                 if not getattr(self, "chrg_notified", False):
-                    await self.notifier.send(
+                    self.chrg_notified = await self.notifier.send(
                         "Battery Monitor",
                         "Charging",
                         URGENCY_LOW,
                         "battery-030-charging",
                     )
-                    self.chrg_notified = True
             return
 
         self.chrg_notified = False
@@ -101,24 +100,23 @@ class BatteryMonitor:
         # Check Levels (Only runs if state_enum == 2, Discharging)
         if pct <= CRIT_LEVEL:
             if not self.crit_notified:
-                await self.notifier.send(
+                status = await self.notifier.send(
                     "BATTERY CRITICAL!",
                     f"Battery is at {pct}%. Please Charge your Device",
                     URGENCY_CRITICAL,
                     "battery-010-symbolic",
                 )
-                self.crit_notified = True
-                self.warn_notified = True
+                self.crit_notified = status
+                self.warn_notified = status
 
         elif pct <= WARN_LEVEL:
             if not self.warn_notified:
-                await self.notifier.send(
+                self.warn_notified = await self.notifier.send(
                     "Low Battery",
                     f"Battery is at {pct}%. Time to Recharge",
                     URGENCY_CRITICAL,
                     "battery-030-symbolic",
                 )
-                self.warn_notified = True
 
     def on_properties_changed(self, interface_name, changed_props, invalidated_props):
         def get_value(prop_value):

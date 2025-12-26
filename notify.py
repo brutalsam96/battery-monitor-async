@@ -10,6 +10,7 @@ URGENCY_LOW = 0
 URGENCY_NORMAL = 1
 URGENCY_CRITICAL = 2
 
+
 class Notifier:
     def __init__(self):
         self.interface = None
@@ -30,8 +31,11 @@ class Notifier:
 
     async def send(self, summary, body, urgency=URGENCY_NORMAL, icon="battery-caution"):
         if not self.interface:
-            print("Notification interface not connected. Cannot send.")
-            return
+            # Added lazy initialize in cases of not connect interface
+            print("Notification interface not connected. Attempting to reconnect...")
+            await self.connect()
+            if not self.interface:
+                return False
 
         hints = {"urgency": Variant("y", urgency)}
         timeout_ms = 0 if urgency == URGENCY_CRITICAL else 5000
@@ -48,5 +52,8 @@ class Notifier:
                 timeout_ms,
             )
             self.last_notification_id = new_id
+            return True
         except Exception as e:
             print(f"Failed to send notification: {e}")
+            self.interface = None
+            return False
