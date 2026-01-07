@@ -3,11 +3,9 @@ import logging
 import argparse
 import sys
 from upower_api import UPowerWrapper
-from notify import Notifier, URGENCY_LOW, URGENCY_CRITICAL
+from notify import URGENCY_NORMAL, Notifier, URGENCY_CRITICAL
 from dbus_next.signature import Variant
 
-
-# --- logging ---
 
 parser = argparse.ArgumentParser(
     description="Battery Monitor uses dbus_next to listen PropertiesChanged signal to monitor device battery and send notifications on two levels"
@@ -90,7 +88,7 @@ class BatteryMonitor:
                     self.chrg_notified = await self.notifier.send(
                         "Battery Monitor",
                         "Charging",
-                        URGENCY_LOW,
+                        URGENCY_NORMAL,
                         "battery-030-charging",
                     )
             return
@@ -114,7 +112,7 @@ class BatteryMonitor:
                 self.warn_notified = await self.notifier.send(
                     "Low Battery",
                     f"Battery is at {pct}%. Time to Recharge",
-                    URGENCY_CRITICAL,
+                    URGENCY_NORMAL,
                     "battery-030-symbolic",
                 )
 
