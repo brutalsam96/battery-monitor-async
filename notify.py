@@ -38,7 +38,7 @@ class Notifier:
                 return False
 
         hints = {"urgency": Variant("y", urgency)}
-        timeout_ms = 0 if urgency == URGENCY_CRITICAL else 5000
+        timeout_ms = 50000 if urgency == URGENCY_CRITICAL else 5000
 
         try:
             new_id = await self.interface.call_notify(
